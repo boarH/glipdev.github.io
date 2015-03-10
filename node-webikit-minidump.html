@@ -46,41 +46,33 @@
 
 <h2><a id="the_problem" class="anchor" href="#tldr" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Problem</h2>
 
-<p>If the application is crashing, it should leave behind some dump files. 
- It is very important to analyze these suckers, as they will tell you 
-precisely what is going on.  Unfortunately setting up the proper 
-environment is painful.  You need three things: the dumfile, a dumpfile 
-reading utility and symbol libraries so the utility outputs something 
-human readable.
+<p>If the application is crashing it should leave behind some dump files.  It is very important to analyze these suckers as they will tell you precisely what is going on.  Unfortunately setting up the proper environment is painful.  You need three things: the dumpfile, a dumpfile reading utility and symbol libraries so the utility outputs something human readable.
 
-<p>Node-webkit has some documentation <a href=https://github.com/nwjs/nw.js/wiki/Crash-dump>here</a>, but as the 
-writing of this, its seems stuck on 0.08 and is incomplete.
+<p>Node-webkit has some documentation <a href=https://github.com/nwjs/nw.js/wiki/Crash-dump>here</a>, but as the writing of this it seems stuck on 0.08 and is incomplete.
+
+<br><br>
 
 <h2><a id="find_the_dump_file" class="anchor" href="#find_the_dump_file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Find the Dump File</h2>
 
-<p>First, you need to find the dump files on the target system.  While we 
-have specificed a location in our app, that feature is currently 
-broken, so all dump files will be in their default locations. There are 
-instructions on to find them here:
+<p>First, you need to find the dump files on the target system.  While we have specificed a location in our app, that feature is currently broken, so all dump files will be in their default locations. There are instructions on to find them here:
 
 <p><a href=https://github.com/nwjs/nw.js/wiki/Crash-dump>https://github.com/nwjs/nw.js/wiki/Crash-dump</a>
 
-<p>You will need to copy the dump file to a linux system or an OSX system 
-... these are the only two platforms currently supported for the 
-minidump_stackwalk utility.
+<p>The dumpfile name seems to use the format $uuid.dmp.
+
+<p>You will need to copy the dump file to a linux system or an OSX system ... these are the only two platforms currently supported for the minidump_stackwalk utility that reads them.
+
+<br><br>
 
 <h2><a id="install_google_breakpad" class="anchor" href="#install_google_breakpad" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install Google Breakpad</h2>
 
-<p>Next, perhaps obviously, you need to get minidump_stackwalk.  This is 
-currenly part of the google breakpad crash reporting system.  You must 
-checkout and build from source:
+<p>Next, perhaps obviously, you need to get minidump_stackwalk.  This is currenly part of the google breakpad crash reporting system.  You must checkout and build from source:
 
 <div class="highlight highlight-html"><pre>
 svn checkout http://google-breakpad.googlecode.com/svn/trunk/ google-breakpad-read-only
 </pre></div>
 
-<p>Please note that svn doesn't seem to work properly on nfs mounted file 
-system, so avoid checking out to one. Next, build and install
+<p>Please note that svn doesn't seem to work properly on nfs mounted file system, so avoid checking out to one. Next, build and install
 
 <div class="highlight highlight-html"><pre>
 cd google-breakpad-read-only
@@ -90,13 +82,11 @@ sudo make install
 </pre></div>
 
 <h2><a id="get_the_symbol_files" class="anchor" href="#get_the_symbol_files" aria-hidden="true"><span class="octicon octicon-link"></span></a>Get the Symbol Files</h2>
-<p>Now you will need symbol files.  This is the tricky part.  There is an 
-excellent tutorial here: 
+<p>Now you will need symbol files.  This is the tricky part.  There is an excellent tutorial here: 
 
 <p><a href=http://www.chromium.org/developers/decoding-crash-dump>http://www.chromium.org/developers/decoding-crash-dump</a>
 
-<p>The key part of this tutorial is to first run the minidump_stackwalk 
-against your dumpfile to get a list of the symbol files you will need.
+<p>The key part of this tutorial is to first run the minidump_stackwalk against your dumpfile to get a list of the symbol files you will need.
 
 <div class="highlight highlight-html"><pre>
 minidump_stackwalk foo.dmp /tmp/my_symbols 2>&1 | grep my_symbols
@@ -117,15 +107,9 @@ minidump_stackwalk foo.dmp /tmp/my_symbols 2>&1 | grep my_symbols
 
 <p>So, now you have to go off and find the actual symbol files.  In the case of node-webkit you can find them here:
 
-<a href=http://dl.nwjs.io>http://dl.nwjs.io</a>
+<p><a href=http://dl.nwjs.io>http://dl.nwjs.io</a>
 
-<p>Just cruise to the right version directory and look for files with the 
-string "symbols" in their names.  Download the file *and upack in the 
-location listed from the output of your first minidump_stackwalk 
-session."  For the example above, that would be 
-"/tmp/my_symbols/nw.exe.pdb/E73F23B6013D4659B2C268B8A0F6058D5f/nw.exe.sym".
-As it turns out, none of those directories are of any import ... 
-minidump just needs to be able to find them.  Here is how I did it:
+<p>Just cruise to the right version directory and look for files with the string "symbols" in their names.  Download the file *and upack in the location listed from the output of your first minidump_stackwalk session."  For the example above, that would be "/tmp/my_symbols/nw.exe.pdb/E73F23B6013D4659B2C268B8A0F6058D5f/nw.exe.sym".  As it turns out, none of those directories are of any import ...  minidump just needs to be able to find them.  Here is how I did it:
 
 <div class="highlight highlight-html"><pre>
 wget 'http://dl.nwjs.io/v0.11.5/node-webkit-symbol-v0.11.5-win-ia32.7z' .
@@ -140,8 +124,7 @@ cp nw.sym /tmp/my_symbols/nw.exe.pdb/E73F23B6013D4659B2C268B8A0F6058D5f/nw.exe.s
 minidump_stackwalk foo.dmp /tmp/my_symbols
 </pre></div>
 
-<p>There will still be unreadable symbol files, but with any luck the 
-symbols from node-webkit will be sufficient.  If not try the tutorial:
+<p>There will still be unreadable symbol files, but with any luck the symbols from node-webkit will be sufficient.  If not try the tutorial:
 
 <p>http://www.chromium.org/developers/decoding-crash-dump
 
@@ -149,15 +132,15 @@ symbols from node-webkit will be sufficient.  If not try the tutorial:
 
 <p>https://msdn.microsoft.com/en-us/windows/hardware/gg463028.aspx
 
-<p>Keep in mind you have to use the dump_syms.exe utility to convert the 
-windows symbols files once you have them.  For reference that utility 
+<p>Keep in mind you have to use the dump_syms.exe utility to convert the windows symbols files once you have them.  For reference that utility 
 is here:
 
 <p>http://google-breakpad.googlecode.com/svn/trunk/src/tools/windows/binaries/dump_syms.exe
 
-<h2><a id="my_specific_issue" class="anchor" href="#my_specific_issue" aria-hidden="true"><span class="octicon octicon-link"></span></a>My Specific Issue</h2>
-<p>In the specific case I was trying to debug, the output from my 
-stackwalk session looked like this:
+<br><br>
+
+<h2><a id="tying_it_together" class="anchor" href="#tying_it_together" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tying it all Together</h2>
+<p>In the specific case I was trying to debug, the output from my stackwalk session looked like this:
 
 <div class="highlight highlight-html"><pre>
 [paden@d1 ~]$ minidump_stackwalk c0ab9c19-4d45-458a-ab68-f91a15aed0f3.dmp /tmp/my_symbols/ | more
@@ -196,13 +179,9 @@ d::allocator&lt;SkBitmap&gt; &gt; const *) [nw_notification_manager_win.cc : 180
     Found by: call frame info
 </pre></div>
 
-<p>While the assertation error sucked, it is pretty obvious from the
-theadtrace that the application was in the middle of processing a
-Notification and ran into some buffer issue with window's version of
-stringcopy.  Rather than waste more time in this hostile environment
-I played with new Notification in a console until I crashed chromium,
-then just made sure to send only 64 bytes in the subject :-).
-<p>Put his in the head section of your web pages:</p>
+<p>While the assertation error sucked, it is pretty obvious from the theadtrace that the application was in the middle of processing a Notification and ran into some buffer issue with window's version of stringcopy.  Rather than waste more time in this hostile environment I played with new Notification in a console until I crashed chromium, then just made sure to send only 64 bytes in the subject :-).
+
+<p>Hope this helps anyone dealing with node-webkit crashes.
 
     <div id="disqus_thread"></div>
     <script type="text/javascript">
